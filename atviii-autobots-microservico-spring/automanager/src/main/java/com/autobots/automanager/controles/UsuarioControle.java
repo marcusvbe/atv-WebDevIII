@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.autobots.automanager.enumeracoes.PerfilUsuario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
@@ -83,6 +84,21 @@ public class UsuarioControle {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
+    @PutMapping("/usuario/{id}/adicionar-perfil")
+    public ResponseEntity<Usuario> adicionarPerfilUsuario(@PathVariable Long id, @RequestParam PerfilUsuario perfil) {
+        Optional<Usuario> usuarioOpt = repositorioUsuario.findById(id);
+        if (usuarioOpt.isPresent()) {
+            Usuario usuario = usuarioOpt.get();
+            usuario.getPerfis().add(perfil);
+            repositorioUsuario.save(usuario);
+            return new ResponseEntity<>(usuario, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+
 
     @DeleteMapping("/usuario/excluir/{id}")
     public ResponseEntity<Void> excluirUsuario(@PathVariable Long id) {
