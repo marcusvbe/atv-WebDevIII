@@ -11,6 +11,9 @@ public class VendaDTO extends RepresentationModel<VendaDTO> {
     private Long id;
     private Date cadastro;
     private String identificacao;
+    private UsuarioDTO cliente;
+    private UsuarioDTO funcionario;
+    private Set<MercadoriaDTO> mercadorias;
+    private Set<ServicoDTO> servicos;
     private VeiculoDTO veiculo;
-    // Getters and Setters
 }
