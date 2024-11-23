@@ -1,113 +1,119 @@
-// src/main/java/com/autobots/automanager/controles/UsuarioControle.java
 package com.autobots.automanager.controles;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
-import com.autobots.automanager.enumeracoes.PerfilUsuario;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.CollectionModel;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.autobots.automanager.DTOs.UsuarioDTO;
-import com.autobots.automanager.entitades.Usuario;
-import com.autobots.automanager.repositorios.RepositorioUsuario;
-import org.modelmapper.ModelMapper;
+import com.autobots.automanager.adicionadores.AdicionadorLinkUsuario;
+import com.autobots.automanager.atualizadores.EnderecoAtualizador;
+import com.autobots.automanager.atualizadores.UsuarioAtualizador;
+import com.autobots.automanager.cadastradores.UsuarioCadastrador;
+import com.autobots.automanager.entidades.Empresa;
+import com.autobots.automanager.entidades.Endereco;
+import com.autobots.automanager.entidades.Usuario;
+import com.autobots.automanager.excluidores.UsuarioExcluidor;
+import com.autobots.automanager.modelos.UsuarioDto;
+import com.autobots.automanager.selecionadores.EmpresaSelecionador;
+import com.autobots.automanager.selecionadores.UsuarioSelecionador;
+import com.autobots.automanager.repositorios.EmpresaRepositorio;
+import com.autobots.automanager.repositorios.UsuarioRepositorio;
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/usuario")
 public class UsuarioControle {
+	
+	@Autowired
+	private UsuarioRepositorio repositorio;
+	
+	@Autowired
+	private AdicionadorLinkUsuario adicionadorLink;
+	
+	@Autowired
+	private UsuarioSelecionador selecionador;
+	
+	@Autowired
+	private UsuarioExcluidor usuarioExcluidor;
+	
+	@Autowired
+	private UsuarioAtualizador atualizador;
+	
+	@Autowired
+	private EmpresaRepositorio empresaRepositorio;
+	
+	@Autowired 
+	private EmpresaSelecionador empresaSelecionador;
 
-    @Autowired
-    private RepositorioUsuario repositorioUsuario;
+	
+	@GetMapping("/{id}")
+	public ResponseEntity<Usuario> obterUsuario(@PathVariable long id) {
+		List<Usuario> usuarios = repositorio.findAll();
+		Usuario usuario = selecionador.selecionar(usuarios, id);
+		if (usuario == null) {
+			ResponseEntity<Usuario> resposta = new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			return resposta;
+		} else {
+			adicionadorLink.adicionarLink(usuario);
+			ResponseEntity<Usuario> resposta = new ResponseEntity<Usuario>(usuario, HttpStatus.FOUND);
+			return resposta;
+		}
+	}
 
-    @Autowired
-    private ModelMapper modelMapper;
+	@GetMapping("/usuarios")
+	public ResponseEntity<List<Usuario>> obterUsuarios() {
+		List<Usuario> usuarios = repositorio.findAll();
+		if (usuarios.isEmpty()) {
+			ResponseEntity<List<Usuario>> resposta = new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			return resposta;
+		} else {
+			adicionadorLink.adicionarLink(usuarios);
+			ResponseEntity<List<Usuario>> resposta = new ResponseEntity<>(usuarios, HttpStatus.FOUND);
+			return resposta;
+		}
+	}
+	
+	@PostMapping("/cadastro")
+	public void cadastrarUsuario(@RequestBody UsuarioDto usuario) {
+		UsuarioCadastrador cadastrador = new UsuarioCadastrador();
+		Usuario novoUsuario = cadastrador.cadastrar(usuario);
+		repositorio.save(novoUsuario);
+	}
+	
+	@PostMapping("/cadastro/empresa/{id}")
+	public void cadastrarUsuarioEmpresa(@RequestBody UsuarioDto usuario, @PathVariable long id) {
+		List<Empresa> empresas = empresaRepositorio.findAll();
+		Empresa empresa = empresaSelecionador.selecionar(empresas, id);
+		UsuarioCadastrador cadastrador = new UsuarioCadastrador();
+		Usuario novoUsuario = cadastrador.cadastrar(usuario);
+		empresa.getUsuarios().add(novoUsuario);
+		empresaRepositorio.save(empresa);
+	}
 
-    @GetMapping("/usuarios")
-    public ResponseEntity<CollectionModel<EntityModel<UsuarioDTO>>> obterUsuarios() {
-        List<Usuario> usuarios = repositorioUsuario.findAll();
-        List<EntityModel<UsuarioDTO>> usuariosDTO = usuarios.stream()
-                .map(usuario -> {
-                    UsuarioDTO usuarioDTO = modelMapper.map(usuario, UsuarioDTO.class);
-                    return EntityModel.of(usuarioDTO,
-                            WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UsuarioControle.class).obterUsuario(usuario.getId())).withSelfRel(),
-                            WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UsuarioControle.class).obterUsuarios()).withRel("usuarios"));
-                })
-                .collect(Collectors.toList());
-        return new ResponseEntity<>(CollectionModel.of(usuariosDTO), HttpStatus.OK);
-    }
-
-    @GetMapping("usuario/{id}")
-    public ResponseEntity<EntityModel<UsuarioDTO>> obterUsuario(@PathVariable Long id) {
-        Optional<Usuario> usuario = repositorioUsuario.findById(id);
-        if (usuario.isPresent()) {
-            UsuarioDTO usuarioDTO = modelMapper.map(usuario.get(), UsuarioDTO.class);
-            EntityModel<UsuarioDTO> usuarioModel = EntityModel.of(usuarioDTO,
-                    WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UsuarioControle.class).obterUsuario(id)).withSelfRel(),
-                    WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UsuarioControle.class).obterUsuarios()).withRel("usuarios"));
-            return new ResponseEntity<>(usuarioModel, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @PostMapping("/usuario/cadastro")
-    public ResponseEntity<EntityModel<UsuarioDTO>> cadastrarUsuario(@RequestBody UsuarioDTO usuarioDTO) {
-        Usuario usuario = modelMapper.map(usuarioDTO, Usuario.class);
-        Usuario novoUsuario = repositorioUsuario.save(usuario);
-        UsuarioDTO novoUsuarioDTO = modelMapper.map(novoUsuario, UsuarioDTO.class);
-        EntityModel<UsuarioDTO> usuarioModel = EntityModel.of(novoUsuarioDTO,
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UsuarioControle.class).obterUsuario(novoUsuario.getId())).withSelfRel(),
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UsuarioControle.class).obterUsuarios()).withRel("usuarios"));
-        return new ResponseEntity<>(usuarioModel, HttpStatus.CREATED);
-    }
-
-    @PutMapping("usuario/atualizar/{id}")
-    public ResponseEntity<EntityModel<UsuarioDTO>> atualizarUsuario(@PathVariable Long id, @RequestBody UsuarioDTO usuarioAtualizadoDTO) {
-        Optional<Usuario> usuarioExistente = repositorioUsuario.findById(id);
-        if (usuarioExistente.isPresent()) {
-            Usuario usuario = modelMapper.map(usuarioAtualizadoDTO, Usuario.class);
-            usuario.setId(id);
-            Usuario usuarioAtualizado = repositorioUsuario.save(usuario);
-            UsuarioDTO usuarioAtualizadoDTOResponse = modelMapper.map(usuarioAtualizado, UsuarioDTO.class);
-            EntityModel<UsuarioDTO> usuarioModel = EntityModel.of(usuarioAtualizadoDTOResponse,
-                    WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UsuarioControle.class).obterUsuario(id)).withSelfRel(),
-                    WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UsuarioControle.class).obterUsuarios()).withRel("usuarios"));
-            return new ResponseEntity<>(usuarioModel, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @PutMapping("/usuario/{id}/adicionar-perfil")
-    public ResponseEntity<Usuario> adicionarPerfilUsuario(@PathVariable Long id, @RequestParam PerfilUsuario perfil) {
-        Optional<Usuario> usuarioOpt = repositorioUsuario.findById(id);
-        if (usuarioOpt.isPresent()) {
-            Usuario usuario = usuarioOpt.get();
-            usuario.getPerfis().add(perfil);
-            repositorioUsuario.save(usuario);
-            return new ResponseEntity<>(usuario, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
-
-
-    @DeleteMapping("/usuario/excluir/{id}")
-    public ResponseEntity<Void> excluirUsuario(@PathVariable Long id) {
-        Optional<Usuario> usuario = repositorioUsuario.findById(id);
-        if (usuario.isPresent()) {
-            repositorioUsuario.deleteById(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
+	@PutMapping("/atualizar/{id}")
+	public void atualizarUsuario(@RequestBody UsuarioDto atualizacao, @PathVariable long id) {
+		Usuario usuario = repositorio.getById(id);
+		atualizador.atualizar(usuario, atualizacao);
+		EnderecoAtualizador enderecoAtualizador = new EnderecoAtualizador();
+		if (usuario.getEndereco() == null) {
+			Endereco end = new Endereco();
+			usuario.setEndereco(end);
+		}
+		enderecoAtualizador.atualizar(usuario.getEndereco(), atualizacao.getEndereco());
+		repositorio.save(usuario);
+	}
+	
+	@DeleteMapping("/excluir/{id}")
+	public void excluirUsuario(@PathVariable long id) {
+		Usuario usuario = repositorio.getById(id);
+		usuarioExcluidor.excluir(usuario);
+	}
 }

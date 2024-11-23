@@ -7,27 +7,27 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import com.autobots.automanager.entitades.CredencialUsuarioSenha;
-import com.autobots.automanager.entitades.Documento;
-import com.autobots.automanager.entitades.Email;
-import com.autobots.automanager.entitades.Empresa;
-import com.autobots.automanager.entitades.Endereco;
-import com.autobots.automanager.entitades.Mercadoria;
-import com.autobots.automanager.entitades.Servico;
-import com.autobots.automanager.entitades.Telefone;
-import com.autobots.automanager.entitades.Usuario;
-import com.autobots.automanager.entitades.Veiculo;
-import com.autobots.automanager.entitades.Venda;
+import com.autobots.automanager.entidades.CredencialUsuarioSenha;
+import com.autobots.automanager.entidades.Documento;
+import com.autobots.automanager.entidades.Email;
+import com.autobots.automanager.entidades.Empresa;
+import com.autobots.automanager.entidades.Endereco;
+import com.autobots.automanager.entidades.Mercadoria;
+import com.autobots.automanager.entidades.Servico;
+import com.autobots.automanager.entidades.Telefone;
+import com.autobots.automanager.entidades.Usuario;
+import com.autobots.automanager.entidades.Veiculo;
+import com.autobots.automanager.entidades.Venda;
 import com.autobots.automanager.enumeracoes.PerfilUsuario;
 import com.autobots.automanager.enumeracoes.TipoDocumento;
 import com.autobots.automanager.enumeracoes.TipoVeiculo;
-import com.autobots.automanager.repositorios.RepositorioEmpresa;
+import com.autobots.automanager.repositorios.EmpresaRepositorio;
 
 @SpringBootApplication
 public class AutomanagerApplication implements CommandLineRunner {
 
 	@Autowired
-	private RepositorioEmpresa repositorioEmpresa;
+	private EmpresaRepositorio repositorioEmpresa;
 
 	public static void main(String[] args) {
 		SpringApplication.run(AutomanagerApplication.class, args);
@@ -209,7 +209,7 @@ public class AutomanagerApplication implements CommandLineRunner {
 		alinhamento.setValor(50);
 
 		empresa.getServicos().add(trocaRodas);
-		empresa.getServicos().add(alinhamento);
+		
 
 		Venda venda = new Venda();
 		venda.setCadastro(new Date());
@@ -229,11 +229,11 @@ public class AutomanagerApplication implements CommandLineRunner {
 		Mercadoria rodaLigaLeve2 = new Mercadoria();
 		rodaLigaLeve2.setCadastro(new Date());
 		rodaLigaLeve2.setFabricao(new Date());
-		rodaLigaLeve2.setNome("Roda de liga leva modelo toyota etios");
+		rodaLigaLeve2.setNome("Roda de liga pesada modelo toyota yaris");
 		rodaLigaLeve2.setValidade(new Date());
 		rodaLigaLeve2.setQuantidade(30);
 		rodaLigaLeve2.setValor(300.0);
-		rodaLigaLeve2.setDescricao("Roda de liga leve original de fábrica da toyta para modelos do tipo hatch");
+		rodaLigaLeve2.setDescricao("Roda de liga pesada original de fábrica da toyta para modelos do tipo hatch");
 		
 		Servico alinhamento2 = new Servico();
 		alinhamento2.setDescricao("Alinhamento das rodas do carro");
@@ -259,6 +259,5 @@ public class AutomanagerApplication implements CommandLineRunner {
 		empresa.getVendas().add(venda2);
 		
 		repositorioEmpresa.save(empresa);
-
 	}
 }
