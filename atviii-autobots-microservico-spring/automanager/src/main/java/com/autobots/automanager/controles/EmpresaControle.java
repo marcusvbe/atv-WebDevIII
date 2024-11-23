@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.autobots.automanager.entitades.Usuario;
+import com.autobots.automanager.repositorios.RepositorioUsuario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
@@ -24,6 +26,9 @@ public class EmpresaControle {
 
     @Autowired
     private RepositorioEmpresa repositorioEmpresa;
+
+    @Autowired
+    private RepositorioUsuario repositorioUsuario;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -84,6 +89,30 @@ public class EmpresaControle {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
+    @PutMapping("/empresa/{empresaId}/associar-usuario/{usuarioId}")
+    public ResponseEntity<EntityModel<EmpresaDTO>> associarUsuario(@PathVariable Long empresaId, @PathVariable Long usuarioId) {
+        Optional<Empresa> empresaOpt = repositorioEmpresa.findById(empresaId);
+        Optional<Usuario> usuarioOpt = repositorioUsuario.findById(usuarioId);
+
+        if (empresaOpt.isPresent() && usuarioOpt.isPresent()) {
+            Empresa empresa = empresaOpt.get();
+            Usuario usuario = usuarioOpt.get();
+
+            empresa.getUsuarios().add(usuario);
+            repositorioEmpresa.save(empresa);
+
+            EmpresaDTO empresaDTO = modelMapper.map(empresa, EmpresaDTO.class);
+            EntityModel<EmpresaDTO> empresaModel = EntityModel.of(empresaDTO,
+                    WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(EmpresaControle.class).obterEmpresa(empresaId)).withSelfRel(),
+                    WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(EmpresaControle.class).obterEmpresas()).withRel("empresas"));
+
+            return new ResponseEntity<>(empresaModel, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
 
     @DeleteMapping("/empresa/excluir/{id}")
     public ResponseEntity<Void> excluirEmpresa(@PathVariable Long id) {
