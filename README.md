@@ -1,1 +1,1 @@
-Repositório de Atividades de Dev Web III 
+Repositório de Atividades de JAVA da disciplina de Dev Web III - Prof. Gerson Penha
