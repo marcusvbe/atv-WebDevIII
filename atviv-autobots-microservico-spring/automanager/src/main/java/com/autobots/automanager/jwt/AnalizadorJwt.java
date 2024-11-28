@@ -19,7 +19,7 @@ class AnalisadorJwt {
 			return null;
 		}
 	}
-	
+
 	public String obterNomeUsuairo(Claims reivindicacoes) {
 		if (reivindicacoes != null) {
 			String nomeUsuario = reivindicacoes.getSubject();

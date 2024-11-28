@@ -15,8 +15,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.autobots.automanager.entidades.Credencial;
+import com.autobots.automanager.entidades.CredencialUsuarioSenha;
 import com.autobots.automanager.jwt.ProvedorJwt;
+import com.autobots.automanager.modelos.CredencialUsuarioSenhaDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Autenticador extends UsernamePasswordAuthenticationFilter {
@@ -32,11 +33,15 @@ public class Autenticador extends UsernamePasswordAuthenticationFilter {
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
 			throws AuthenticationException {
-		Credencial credencial = null;
+		CredencialUsuarioSenha credencial = new CredencialUsuarioSenha();
 		try {
-			credencial = new ObjectMapper().readValue(request.getInputStream(), Credencial.class);
+			CredencialUsuarioSenhaDto credencialDto = new ObjectMapper().readValue(request.getInputStream(), CredencialUsuarioSenhaDto.class);
+			if (credencialDto != null) {				
+			credencial.setNomeUsuario(credencialDto.getNomeUsuario());
+			credencial.setSenha(credencialDto.getSenha());
+			}
 		} catch (IOException e) {
-			credencial = new Credencial();
+			credencial = new CredencialUsuarioSenha();
 			credencial.setNomeUsuario("");
 			credencial.setSenha("");
 		}

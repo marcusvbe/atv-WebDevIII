@@ -1,7 +1,7 @@
 package com.autobots.automanager.entidades;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -11,24 +11,98 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
-import com.autobots.automanager.modelos.Perfil;
+import org.springframework.hateoas.RepresentationModel;
 
-import lombok.Data;
+import com.autobots.automanager.enumeracoes.PerfilUsuario;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-@Data
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 @Entity
-public class Usuario {
+@EqualsAndHashCode(exclude = { "mercadorias", "vendas", "veiculos" }, callSuper = false)
+public class Usuario extends RepresentationModel<Usuario>{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	@Column
+	
+	@Column(nullable = false)
 	private String nome;
 	
-	@OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-	private Credencial credencial;
+	@Column
+	private String nomeSocial;
 	
 	@ElementCollection(fetch = FetchType.EAGER)
-	private List<Perfil> Perfis = new ArrayList<>();
+	private Set<PerfilUsuario> perfis = new HashSet<>();
+	
+	@OneToMany(orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	private Set<Telefone> telefones = new HashSet<>();
+	
+	@OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+	private Endereco endereco;
+	
+	@OneToMany(orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	private Set<Documento> documentos = new HashSet<>();
+	
+    @OneToMany(orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	private Set<Email> emails = new HashSet<>();
+    
+	@OneToMany(orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	private Set<Credencial> credenciais = new HashSet<>();
+	
+	@OneToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.EAGER)
+	private Set<Mercadoria> mercadorias = new HashSet<>();
+    
+    @ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+	private Set<Venda> vendas = new HashSet<>();
+	
+	@JsonIgnoreProperties(value = {"proprietario", "vendas"} )
+    @OneToMany(fetch = FetchType.EAGER, cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+	private Set<Veiculo> veiculos = new HashSet<>();
+    
+	
+    public Set<CredencialUsuarioSenha> getCredenciaisUsuarioSenha() {
+        Set<CredencialUsuarioSenha> credenciaisUsuarioSenha = new HashSet<>();
+        for (Credencial credencial : credenciais) {
+            if (credencial instanceof CredencialUsuarioSenha) {
+                credenciaisUsuarioSenha.add((CredencialUsuarioSenha) credencial);
+            }
+        }
+        return credenciaisUsuarioSenha;
+    }
+    
+    public Set<CredencialCodigoBarra> getCredenciaisCodigoBarra() {
+        Set<CredencialCodigoBarra> credenciais = new HashSet<>();
+        for (Credencial credencial : credenciais) {
+            if (credencial instanceof CredencialCodigoBarra) {
+                credenciais.add((CredencialCodigoBarra) credencial);
+            }
+        }
+        return credenciais;
+    }
+    
+	public CredencialUsuarioSenha getCredencialUsuarioSenha() {
+	    for (Credencial credencial : credenciais) {
+	        if (credencial instanceof CredencialUsuarioSenha) {
+	            return (CredencialUsuarioSenha) credencial;
+	        }
+	    }
+	    return null;
+	}
+	
+    public CredencialCodigoBarra getCredencialCodigoBarra() {
+	    for (Credencial credencial : credenciais) {
+	        if (credencial instanceof CredencialCodigoBarra) {
+	            return (CredencialCodigoBarra) credencial;
+	        }
+	    }
+        return null;
+    }
 }

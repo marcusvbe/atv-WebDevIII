@@ -30,7 +30,7 @@ public class Seguranca extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private ProvedorJwt provedorJwt;
 
-	private static final String[] rotasPublicas = { "/", "/cadastrar-usuario", "/obter-usuarios" };
+	private static final String[] rotasPublicas = { "/", "/login", "/usuario/cadastro", "/usuario/cadastro/empresa/*", "/usuario/usuarios" };
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {

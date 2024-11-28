@@ -8,8 +8,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.autobots.automanager.entidades.CredencialUsuarioSenha;
 import com.autobots.automanager.entidades.Usuario;
-import com.autobots.automanager.modelos.Perfil;
+import com.autobots.automanager.enumeracoes.PerfilUsuario;
 
 @SuppressWarnings("serial")
 public class UserDetailsImpl implements UserDetails {
@@ -22,7 +23,7 @@ public class UserDetailsImpl implements UserDetails {
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		List<SimpleGrantedAuthority> autoridades = new ArrayList<>();
-		for (Perfil perfil : usuario.getPerfis()) {
+		for (PerfilUsuario perfil : usuario.getPerfis()) {
 			autoridades.add(new SimpleGrantedAuthority(perfil.name()));
 		}
 		return autoridades;
@@ -30,12 +31,20 @@ public class UserDetailsImpl implements UserDetails {
 
 	@Override
 	public String getPassword() {
-		return usuario.getCredencial().getSenha();
+		CredencialUsuarioSenha credencial = usuario.getCredencialUsuarioSenha();
+		if (credencial != null) {
+			return credencial.getSenha();
+		}
+		return null;
 	}
 
 	@Override
 	public String getUsername() {
-		return usuario.getCredencial().getNomeUsuario();
+		CredencialUsuarioSenha credencial = usuario.getCredencialUsuarioSenha();
+		if (credencial != null) {
+			return credencial.getNomeUsuario();
+		}
+		return null;
 	}
 
 	@Override
@@ -55,6 +64,10 @@ public class UserDetailsImpl implements UserDetails {
 
 	@Override
 	public boolean isEnabled() {
-		return true;
-	}
+		CredencialUsuarioSenha credencial = usuario.getCredencialUsuarioSenha();
+		if (credencial != null) {
+			return !credencial.isInativo();
+		}
+		return false;
+		}
 }
